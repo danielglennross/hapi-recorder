@@ -1,0 +1,18 @@
+{
+  "extends": "@bedegaming/eslint-config-bede",
+  "parserOptions": {
+    "sourceType": "script",
+    "ecmaFeatures": {
+      "modules": false,
+      "impliedStrict": false
+    }
+  },
+  "env": {
+    "node": true
+  },
+  "rules": {
+    "strict": [2, "global"],
+    "global-require": 0,
+    "padded-blocks": 0
+  }
+}
