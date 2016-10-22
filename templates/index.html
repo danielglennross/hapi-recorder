@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<head>
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+</head>
+<body>
+  <div id='test'>
+    <div id='container' style="height: 100%;"></div>
+    {{#each this}}
+      <div>{{ route.id }}</div>
+      <div>{{ route.request.path }}</div>
+      <div id='{{ route.id }}' style="height: 100%;"></div>
+    {{/each}}
+  </div>
+</body>
+
+<script type='text/javascript'>
+  const meta = {{{ json data }}}
+  const items = meta.data.root;
+  console.log(items);
+  
+  const cont = document.getElementById('container');
+  google.charts.load('current', {'packages':['timeline']});
+  google.charts.setOnLoadCallback(drawChart);
+  function drawChart() {
+    items.forEach(i => {
+      const container = document.createElement('div');
+      cont.appendChild(container);
+
+      const chart = new google.visualization.Timeline(container);
+      const dataTable = new google.visualization.DataTable();
+     
+      dataTable.addColumn({ type: 'string', id: 'Item' });
+      dataTable.addColumn({ type: 'string', id: 'dummy bar label' });
+      dataTable.addColumn({ type: 'string', role: 'tooltip' });
+      dataTable.addColumn({ type: 'number', id: 'Start' });
+      dataTable.addColumn({ type: 'number', id: 'End' });
+
+      const tooltip = (z) => JSON.stringify({
+        start: z.timeElaspsed.start,
+        end: z.timeElaspsed.end,
+        elapsed: z.timeElaspsed.elapsed,
+        value: z.response || z.error
+      });
+
+      dataTable.addRows(
+        i.track.map(z => [z.message, null, tooltip(z), z.timeElaspsed.start, z.timeElaspsed.end])
+      );
+
+      chart.draw(dataTable, { tooltip: {isHtml: true}, height: 300 });
+    });
+  }
+</script>

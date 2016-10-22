@@ -1,19 +1,19 @@
 'use strict';
 
 class Memory {
-  
+
   constructor() {
-    this.store = {};
+    this.store = [];
   }
-  
+
   get() {
     return Promise.resolve(this.store);
   }
 
-  publish(id, track) {
-    return Promise.resolve(Object.assign(this.store, {
-      [id]: track
-    }));
+  publish(route, track) {
+    const item = { route, track };
+    this.store.push(item);
+    return Promise.resolve();
   }
 }
 
