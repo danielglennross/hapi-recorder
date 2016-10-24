@@ -23,6 +23,7 @@
     "@bedegaming/eslint-config-bede": "^1.0.1"
   },
   "dependencies": {
+    "continuation-local-storage": "^3.2.0",
     "handlebars": "^4.0.5",
     "vision": "^4.1.0"
   }
