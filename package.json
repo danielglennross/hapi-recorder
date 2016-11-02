@@ -1,6 +1,6 @@
 {
   "name": "hapi-recorder",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "hapi plugin to wrap internal calls, recording and publishing performance info",
   "main": "index.js",
   "scripts": {
