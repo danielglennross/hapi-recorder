@@ -1,19 +1,92 @@
 <!DOCTYPE html>
 <head>
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/gsap/1.19.0/TweenLite.min.js"></script>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 </head>
 <body>
-  <div id='test'>
-    <div id='container' style="height: 100%;"></div>
+  <div class='container'>
     {{#each this}}
-      <div>{{ route.id }}</div>
-      <div>{{ route.request.path }}</div>
-      <div id='{{ route.id }}' style="height: 100%;"></div>
+      <div class='row'>
+        <div class='col-md-12'>
+          <span>{{ route.id }}</span>
+          <span>[{{ route.request.method }}] {{ route.request.path }}</span>
+          <div id='track' data-track='{{{ json track }}}'></div>
+        </div>
+      </div>
     {{/each}}
   </div>
 </body>
 
 <script type='text/javascript'>
+
+  class TimelineRenderer {
+    registerEvents() {
+      const rows = document.getElementsByClassName('row');
+      Array.from(rows).forEach((el) => {
+        el.addEventListener('click', () => this.loadGraph(el));
+      });
+    }
+
+    loadGraph(el) {
+
+      // either create or show
+
+      // create
+      const trackEl = Array.from(el.children[0].childNodes).filter(x => x.id === 'track')[0];
+      const trackJson = JSON.parse(trackEl.getAttribute('data-track'));
+      const graphContainer = this.makeGraph(el, trackJson);
+
+      const t = TweenLite.to(graphContainer, 0.5, { css: { opacity:1 }, paused:true, reversed:true});
+      if (t.reversed()) {
+        t.play();
+      } else {
+        t.reverse();
+      }
+    }
+
+    makeGraph(el, track) {
+      
+      const drawChart = (graphContainer) => {
+        const chart = new google.visualization.Timeline(graphContainer);
+        const dataTable = new google.visualization.DataTable();
+      
+        dataTable.addColumn({ type: 'string', id: 'Item' });
+        dataTable.addColumn({ type: 'string', id: 'dummy bar label' });
+        dataTable.addColumn({ type: 'string', role: 'tooltip' });
+        dataTable.addColumn({ type: 'number', id: 'Start' });
+        dataTable.addColumn({ type: 'number', id: 'End' });
+
+        const tooltip = (z) => JSON.stringify({
+          start: z.timeElaspsed.start,
+          end: z.timeElaspsed.end,
+          elapsed: z.timeElaspsed.elapsed,
+          value: z.response || z.error
+        });
+
+        dataTable.addRows(
+          track.map(z => [z.message, null, tooltip(z), z.timeElaspsed.start, z.timeElaspsed.end])
+        );
+
+        chart.draw(dataTable, { tooltip: {isHtml: true}, height: 300 });
+      }
+      
+      const graphContainer = document.createElement('div');
+      graphContainer.style.opacity = 0;
+      el.appendChild(graphContainer);
+
+      google.charts.load('current', { 'packages':['timeline'] });
+      google.charts.setOnLoadCallback(() => drawChart(graphContainer));
+      return graphContainer;
+    }
+  };
+
+  const renderer = new TimelineRenderer();
+  renderer.registerEvents();
+
+</script>
+
+<!--<script type='text/javascript'>
   const meta = {{{ json data }}}
   const items = meta.data.root;
   console.log(items);
@@ -49,4 +122,26 @@
       chart.draw(dataTable, { tooltip: {isHtml: true}, height: 300 });
     });
   }
-</script>
+</script>-->
+
+<style>
+.row {
+  margin-bottom: 20px;
+}
+.row .row {
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+[class*="col-"] {
+  padding-top: 15px;
+  padding-bottom: 15px;
+  background-color: #eee;
+  background-color: rgba(86,61,124,.15);
+  border: 1px solid #ddd;
+  border: 1px solid rgba(86,61,124,.2);
+}
+hr {
+  margin-top: 40px;
+  margin-bottom: 40px;
+}
+</style>
