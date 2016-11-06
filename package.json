@@ -25,6 +25,7 @@
   "dependencies": {
     "continuation-local-storage": "^3.2.0",
     "handlebars": "^4.0.5",
+    "hapi": "^15.2.0",
     "vision": "^4.1.0"
   }
 }

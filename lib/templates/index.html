@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <head>
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-  <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/gsap/1.19.0/TweenLite.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/gsap/1.19.0/TweenMax.min.js"></script>
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 </head>
 <body>
@@ -13,6 +13,7 @@
           <span>[{{ route.request.method }}] {{ route.request.path }}</span>
           <div id='track' data-track='{{{ json track }}}'></div>
         </div>
+        <div id='graph-{{ route.id }}' class='col-md-12 existsButHidden'></div>
       </div>
     {{/each}}
   </div>
@@ -21,34 +22,66 @@
 <script type='text/javascript'>
 
   class TimelineRenderer {
+    constructor() {
+      this.loadedGraphs = [];
+    }
+
     registerEvents() {
       const rows = document.getElementsByClassName('row');
       Array.from(rows).forEach((el) => {
-        el.addEventListener('click', () => this.loadGraph(el));
+        el.addEventListener('click', () => this.displayGraph(el));
       });
     }
 
-    loadGraph(el) {
-
-      // either create or show
-
-      // create
-      const trackEl = Array.from(el.children[0].childNodes).filter(x => x.id === 'track')[0];
-      const trackJson = JSON.parse(trackEl.getAttribute('data-track'));
-      const graphContainer = this.makeGraph(el, trackJson);
-
-      const t = TweenLite.to(graphContainer, 0.5, { css: { opacity:1 }, paused:true, reversed:true});
+    tween(t) {
       if (t.reversed()) {
-        t.play();
+        t.play()
       } else {
         t.reverse();
       }
     }
 
+    displayGraph(el) {
+      const trackParentEl = el.children[0];
+      const graphEl = el.children[1];
+
+      // toggle
+      const isHidden = !!(Array.from(graphEl.classList).filter(x => x === 'existsButHidden' || x === 'hidden')[0]);
+      if (isHidden) {
+        // either create or show
+        const isLoaded = this.loadedGraphs.map(x => x.id).indexOf(graphEl.id) > -1;
+        if (isLoaded) {
+          const t = this.loadedGraphs.filter(x => x.id === graphEl.id)[0].tween;
+          this.tween(t);
+          //graphEl.classList.remove('hidden');
+          return Promise.resolve();
+        }
+        // create
+        const trackEl = Array.from(trackParentEl.childNodes).filter(x => x.id === 'track')[0];
+        const trackJson = JSON.parse(trackEl.getAttribute('data-track'));
+        return this.makeGraph(graphEl, trackJson).then(() => {
+          //graphEl.classList.remove('existsButHidden');
+
+          const tween = TweenMax.to(graphEl, 0.2, { opacity:1, paused:true, reversed:true });
+          this.loadedGraphs.push({
+            id: graphEl.id,
+            tween: tween
+          });
+          this.tween(t);
+          return Promise.resolve();
+        });
+      }
+      
+      //graphEl.classList.add('hidden');
+      const t = this.loadedGraphs.filter(x => x.id === graphEl.id)[0].tween;
+      this.tween(t);
+      return Promise.resolve();
+    }
+
     makeGraph(el, track) {
       
-      const drawChart = (graphContainer) => {
-        const chart = new google.visualization.Timeline(graphContainer);
+      const drawChart = () => {
+        const chart = new google.visualization.Timeline(el);
         const dataTable = new google.visualization.DataTable();
       
         dataTable.addColumn({ type: 'string', id: 'Item' });
@@ -68,16 +101,17 @@
           track.map(z => [z.message, null, tooltip(z), z.timeElaspsed.start, z.timeElaspsed.end])
         );
 
-        chart.draw(dataTable, { tooltip: {isHtml: true}, height: 300 });
+        const graphHeight = track.length > 5 ? `${5 * 70}` : `${track.length * 70}`
+        chart.draw(dataTable, { tooltip: {isHtml: true}, height: graphHeight });
       }
       
-      const graphContainer = document.createElement('div');
-      graphContainer.style.opacity = 0;
-      el.appendChild(graphContainer);
-
-      google.charts.load('current', { 'packages':['timeline'] });
-      google.charts.setOnLoadCallback(() => drawChart(graphContainer));
-      return graphContainer;
+      return new Promise((resolve) => { 
+        google.charts.load('current', { 'packages':['timeline'] });
+        google.charts.setOnLoadCallback(() => {
+          drawChart();
+          resolve();
+        });
+      });
     }
   };
 
@@ -86,47 +120,10 @@
 
 </script>
 
-<!--<script type='text/javascript'>
-  const meta = {{{ json data }}}
-  const items = meta.data.root;
-  console.log(items);
-  
-  const cont = document.getElementById('container');
-  google.charts.load('current', {'packages':['timeline']});
-  google.charts.setOnLoadCallback(drawChart);
-  function drawChart() {
-    items.forEach(i => {
-      const container = document.createElement('div');
-      cont.appendChild(container);
-
-      const chart = new google.visualization.Timeline(container);
-      const dataTable = new google.visualization.DataTable();
-     
-      dataTable.addColumn({ type: 'string', id: 'Item' });
-      dataTable.addColumn({ type: 'string', id: 'dummy bar label' });
-      dataTable.addColumn({ type: 'string', role: 'tooltip' });
-      dataTable.addColumn({ type: 'number', id: 'Start' });
-      dataTable.addColumn({ type: 'number', id: 'End' });
-
-      const tooltip = (z) => JSON.stringify({
-        start: z.timeElaspsed.start,
-        end: z.timeElaspsed.end,
-        elapsed: z.timeElaspsed.elapsed,
-        value: z.response || z.error
-      });
-
-      dataTable.addRows(
-        i.track.map(z => [z.message, null, tooltip(z), z.timeElaspsed.start, z.timeElaspsed.end])
-      );
-
-      chart.draw(dataTable, { tooltip: {isHtml: true}, height: 300 });
-    });
-  }
-</script>-->
-
 <style>
 .row {
-  margin-bottom: 20px;
+  margin-top: 10px;
+  cursor: pointer;
 }
 .row .row {
   margin-top: 10px;
@@ -135,10 +132,21 @@
 [class*="col-"] {
   padding-top: 15px;
   padding-bottom: 15px;
+}
+[class*="col-"]:nth-child(odd) {
   background-color: #eee;
   background-color: rgba(86,61,124,.15);
   border: 1px solid #ddd;
   border: 1px solid rgba(86,61,124,.2);
+}
+.existsButHidden {
+  /*visibility: hidden;*/
+  padding-top: 0px;
+  padding-bottom: 0px;
+  border: 0px;
+  min-height: 0px;
+
+  opacity: 0;
 }
 hr {
   margin-top: 40px;
