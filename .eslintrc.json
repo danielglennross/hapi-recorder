@@ -4,7 +4,8 @@
     "sourceType": "script",
     "ecmaFeatures": {
       "modules": false,
-      "impliedStrict": false
+      "impliedStrict": false,
+      "jsx": true
     }
   },
   "env": {

@@ -1,0 +1,30 @@
+.row {
+  margin-top: 10px;
+  cursor: pointer;
+}
+.row .row {
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+[class*="col-"] {
+  padding-top: 15px;
+  padding-bottom: 15px;
+}
+[class*="col-"]:nth-child(odd) {
+  background-color: #eee;
+  background-color: rgba(86,61,124,.15);
+  border: 1px solid #ddd;
+  border: 1px solid rgba(86,61,124,.2);
+}
+.existsButHidden {
+  /*visibility: hidden;*/
+  padding-top: 0px;
+  padding-bottom: 0px;
+  border: 0px;
+  min-height: 0px;
+  opacity: 0;
+}
+hr {
+  margin-top: 40px;
+  margin-bottom: 40px;
+}
