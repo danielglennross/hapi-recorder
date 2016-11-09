@@ -12,18 +12,16 @@ class GraphRow extends React.Component {
   }
 
   tween() {
-    const fadeInOut = (val) => TweenMax.to(this.refs.graphContainer, 0.2, { opacity: val });
+    const toggle = (val) => TweenMax.to(this.refs.graphContainer, 0.2, { opacity: val });
     if (this.props.isRowActive) {
-      fadeInOut(1);
+      toggle(1);
     } else {
-      fadeInOut(0);
+      toggle(0);
     }
   }
 
   componentDidMount() {
-    if (this.props.isRowActive && !this.state.isLoaded) {
-      this.drawCharts();
-    }
+    this.refs.graphContainer.style.opacity = 0;
   }
 
   componentDidUpdate() {
@@ -56,7 +54,7 @@ class GraphRow extends React.Component {
         track.map(z => [z.message, null, tooltip(z), z.timeElaspsed.start, z.timeElaspsed.end])
       );
 
-      const graphHeight = track.length > 5 ? `${5 * 70}` : `${track.length * 70}`;
+      const graphHeight = track.length > 5 ? `${5 * 50}` : `${track.length * 50}`;
       chart.draw(dataTable, { tooltip: { isHtml: true }, height: graphHeight });
 
       this.setState({
@@ -75,7 +73,7 @@ class GraphRow extends React.Component {
 
   render() {
     return (
-      <div ref='graphContainer' className='row' style={!this.state.isLoaded ? { opacity: 0 } : {}} >
+      <div ref='graphContainer' className='row'>
         <div ref='graph' className='col-md-12'></div>
       </div>
     );
