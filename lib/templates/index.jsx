@@ -15,11 +15,9 @@ class Index extends React.Component {
           <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
         </head>
         <body>
-          <div id="app-mount"
-              dangerouslySetInnerHTML={{ __html: this.props.children }}>
+          <div id="app-mount" dangerouslySetInnerHTML={{ __html: this.props.children }}>
           </div>
-          <script id="app-state"
-              dangerouslySetInnerHTML={{ __html: this.props.state }}>
+          <script id="app-state" dangerouslySetInnerHTML={{ __html: this.props.state }}>
           </script>
           <script src="/assets/client.js"></script>
         </body>

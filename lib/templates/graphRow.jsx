@@ -7,21 +7,22 @@ class GraphRow extends React.Component {
   constructor() {
     super();
     this.state = {
-      isLoaded: false
+      isLoaded: false,
+      maxGraphHeight: this.getGraphHeight(5)
     };
   }
 
+  getGraphHeight(trackLength) {
+    return trackLength * 66;
+  }
+
   tween() {
-    const toggle = (val) => TweenMax.to(this.refs.graphContainer, 0.2, { opacity: val });
+    const toggle = (val) => TweenMax.to(this.refs.graph, 0.2, { height: val });
     if (this.props.isRowActive) {
-      toggle(1);
+      toggle(this.state.maxGraphHeight);
     } else {
       toggle(0);
     }
-  }
-
-  componentDidMount() {
-    this.refs.graphContainer.style.opacity = 0;
   }
 
   componentDidUpdate() {
@@ -54,12 +55,18 @@ class GraphRow extends React.Component {
         track.map(z => [z.message, null, tooltip(z), z.timeElaspsed.start, z.timeElaspsed.end])
       );
 
-      const graphHeight = track.length > 5 ? `${5 * 50}` : `${track.length * 50}`;
-      chart.draw(dataTable, { tooltip: { isHtml: true }, height: graphHeight });
+      if (track.length <= 5) {
+        this.setState({
+          maxGraphHeight: this.getGraphHeight(track.length)
+        });
+      }
+      chart.draw(dataTable, { tooltip: { isHtml: true }, height: this.state.maxGraphHeight });
 
       this.setState({
         isLoaded: true
       });
+
+      this.refs.graph.style.height = 0;
     };
 
     google.charts.load('current', { packages: ['timeline'] });
@@ -73,9 +80,7 @@ class GraphRow extends React.Component {
 
   render() {
     return (
-      <div ref='graphContainer' className='row'>
-        <div ref='graph' className='col-md-12'></div>
-      </div>
+      <div ref='graph' className='col-md-12 graph'></div>
     );
   }
 }
